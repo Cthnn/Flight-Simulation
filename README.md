@@ -1,3 +1,7 @@
+
+# Instructions To Run and Build
+---
+
 To run the program, there is already a compiled version in the bin. This should be named "flight".
 In order to run the program enter the first src directory and type the following command:
 
