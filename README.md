@@ -1,9 +1,15 @@
 # Flight Simulation Application
----
+
 A flight simulator that uses OpenGL to create Smooth and Flat shaded shapes. Shapes can also be displayed as Wireframe shapes.
 
+Smooth Shading 
+![Smooth Shading](https://raw.githubusercontent.com/Cthnn/Flight-Simulation/main/Examples/Smooth.png)
+Flat Shading 
+![Flat Shading](https://raw.githubusercontent.com/Cthnn/Flight-Simulation/main/Examples/Flat.png)
+Wireframe
+![Wireframe](https://raw.githubusercontent.com/Cthnn/Flight-Simulation/main/Examples/Flat.png)
+
 # Instructions To Run and Build
----
 
 To run the program, there is already a compiled version in the bin. This should be named "flight".
 In order to run the program enter the first src directory and type the following command:
