@@ -1,3 +1,6 @@
+# Flight Simulation Application
+---
+A flight simulator that uses OpenGL to create Smooth and Flat shaded shapes. Shapes can also be displayed as Wireframe shapes.
 
 # Instructions To Run and Build
 ---
@@ -18,7 +21,10 @@ To compile the program do the following:
 
 The following are instruction on how to use the program.
 
-To toggle between Free Camera mode and Flight mode, press F. The default mode is Free Camera mode.
+To toggle between Free Camera mode and Flight mode, press F. The default mode is Free Camera mode. While in Flight mode, use the following keybinds
+
+    - Horizontal Loop: H
+    - Vertical Loop: V
 
 To toggle between display modes, use the following key bindings:
 
