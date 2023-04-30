@@ -14,22 +14,17 @@
 #include "flight/Ellipsoid.h"
 #include "flight/Dodecahedron.h"
 #include "flight/Icosahedron.h"
-
-// Method Headers
-void framebufferSizeCallback(GLFWwindow * window, int width, int height);
-void cursorPosCallback(GLFWwindow * window, double xpos, double ypos);
-void mouseButtonCallback(GLFWwindow * window, int button, int action, int mods);
-void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
-void processInputs(GLFWwindow * window);
-void perFrameTimeLogic();
-void scrollCallback(GLFWwindow * window, double xoffset, double yoffset);
+#include "flight/Flight.h"
 
 
 // Set Window Height and width
 const unsigned int SCR_WIDTH = 1024;
 const unsigned int SCR_HEIGHT = 1024;
+const unsigned int RAD = 17.7;
 
-//Shape Display Modes
+int curr = 0;
+//header
+void pass_params_to_shader(Shader shader, Camera camera);
 enum class Modes {SMOOTH,FLAT,WIREFRAME};
 Modes mode = Modes::SMOOTH;
 
@@ -44,55 +39,111 @@ float deltaTime = 0.0f;
 float lastFrame = 0.0f;
 
 // Position of light, Color of Light, and Object Color
-glm::vec3 lightPos(0.0f, 0.0f, 5.0f);
-glm::vec3 lightColor(1.0f, 1.0f, 1.0f);
-glm::vec3 objColor(0.0f, 0.0f, 1.0f);
+const glm::vec3 lightPos(0.0f, 0.0f, 5.0f);
+const glm::vec3 lightColor(1.0f, 1.0f, 1.0f);
+const glm::vec3 objColor(0.0f, 0.0f, 1.0f);
 
 //Defining the shapes in the universe and their positions.
 std::vector<Shape*> shapes = {new Cone,new Cube(),new Cylinder(),new Ellipsoid(),new Icosahedron(0),new Icosahedron(2),new Oct(),new Tetra(),new Torus(), new Dodecahedron()};
+glm::vec3 shapePos[] = {glm::vec3(0.0f, 0.0f, 0.0f),glm::vec3(2.0f, 5.0f, -15.0f),glm::vec3(-1.5f, -5.2f, -2.5f),glm::vec3(-3.8f, -2.0f, -12.3f),glm::vec3(2.4f, -0.4f, -10.5f),glm::vec3(-0.7f, 3.0f, -7.5f),glm::vec3(1.3f, -3.0f, -9.0f),glm::vec3(2.8f, 2.0f, -2.5f),glm::vec3(1.7f, 0.3f, -20.0f),glm::vec3(4.5f, -7.0f, -12.0f)};
+
 std::vector<std::vector<GLuint>>indices;
 std::vector<glm::vec3> vertices;
 std::vector<glm::vec3> normalV;
 std::vector<float>rot;
-glm::vec3 shapePos[] = {glm::vec3(0.0f, 0.0f, 0.0f),glm::vec3(2.0f, 5.0f, -15.0f),glm::vec3(-1.5f, -5.2f, -2.5f),glm::vec3(-3.8f, -2.0f, -12.3f),glm::vec3(2.4f, -0.4f, -10.5f),glm::vec3(-0.7f, 3.0f, -7.5f),glm::vec3(1.3f, -3.0f, -9.0f),glm::vec3(2.8f, 2.0f, -2.5f),glm::vec3(1.7f, 0.3f, -20.0f),glm::vec3(4.5f, -7.0f, -12.0f)};
+
 // Variables for Flight Simulation
 bool flight = false;
 bool vertical = true;
 //Init camera
 Camera camera(glm::vec3(0.0f, 0.0f, 5.0f));
 glm::vec3 center;
-int curr = 0;
-int rad = 17.7;
 GLuint normalVBO;
 
 int main()
 {
+    GLFWwindow * window = init_glfw();
     // For Random Rotations, Initialize random seed
     unsigned seed = time(0);
     srand(seed);
 
-    // Get Center of the Universe
-    float center_x= 0,center_y=0,center_z=0;
-    for(int i = 0;i< shapes.size();i++){
-        center_x += shapePos[i].x;
-        center_y += shapePos[i].y;
-        center_z += shapePos[i].z;
-    }
-    center_x = center_x/shapes.size();
-    center_y = center_y/shapes.size();
-    center_z = center_z/shapes.size();
-    center = glm::vec3(center_x,center_y,center_z);
+    // Get Center of the world for camera
+    get_center();
 
+    // Set normals of shapes for light
+    set_normals();
+
+    //Define shaders
+    Shader shader("./src/shader/phong.vert.glsl", "./src/shader/phong.frag.glsl");
+    GLuint VAO, vertexVBO;
+
+    // Bind our VAO and VBOs
+    std::tie(VAO,vertexVBO) = bind_VAO_VBO();
+
+    //Render Loop
+    while (!glfwWindowShouldClose(window))
+    {
+        //For flight simulation. Circles around the universe based on "curr" which represents the start time of the flight simulation
+        if(flight){
+            if(vertical){
+                glm::vec3 camPos(center.x,center.y+RAD*sin(M_PI*(1000-curr)/1000),center.z-RAD*cos(M_PI*(1000-curr)/1000));
+                camera.changePos(camPos);
+                curr+=1;
+            }else{
+                glm::vec3 camPos(center.x+RAD*sin(M_PI*(1000-curr)/1000),center.y,center.z-RAD*cos(M_PI*(1000-curr)/1000));
+                camera.changePos(camPos);
+                curr+=1;
+            }
+
+        }
+
+        perFrameTimeLogic();
+        processInputs(window);
+
+        glClearColor(52.0f/255.0f, 1.0f, 1.0f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        shader.use();
+
+        // Pass parameters into our shaders
+        pass_params_to_shader(shader, camera);
+
+        glfwSwapBuffers(window);
+        glfwPollEvents();
+    }
+
+    return 0;
+}
+
+void pass_params_to_shader(Shader shader, Camera camera){
+    glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float) SCR_WIDTH / (float) SCR_HEIGHT, 0.1f,100.0f);
+    shader.setMat4("projection",projection);
+    glm::mat4 view = camera.getViewMatrix();
+    shader.setMat4("view", view);
+    shader.setVec3("lightPos",lightPos);
+    shader.setVec3("viewPos",camera.Position);
+    shader.setVec3("lightColor",lightColor);
+    shader.setVec3("objectColor",objColor);
+
+    // Get info associated with each shape and draw the shape
+    for(int i=0; i < shapes.size();i++){
+        glm::mat4 model = glm::mat4(1.0f); // make sure to initialize matrix to identity matrix first
+        model = glm::translate(model, shapePos[i]);
+        model = glm::rotate(model, glm::radians(rot[i]), glm::vec3(1.0f, 0.3f, 0.5f));
+        shader.setMat4("model", model);
+        glDrawArrays(GL_TRIANGLES, indices[i][0], indices[i][1]);
+    }
+}
+
+GLFWwindow * init_glfw(){
     //Initialize Window
+    //Shape Display Modes
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-
-
     glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
     GLFWwindow * window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "OpenGLDemo", nullptr, nullptr);
-
     if (!window)
     {
         std::cout << std::unitbuf
@@ -110,6 +161,7 @@ int main()
     glfwSetMouseButtonCallback(window, mouseButtonCallback);
     glfwSetScrollCallback(window, scrollCallback);
 
+
     if (!gladLoadGLLoader(reinterpret_cast<GLADloadproc>(glfwGetProcAddress)))
     {
         std::cout << std::unitbuf
@@ -119,37 +171,40 @@ int main()
 
         std::abort();
     }
-    //If mode is WIREFRAME mode, just show lines
-    if(mode == Modes::WIREFRAME){
-        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-    }
-    // Adds  Vertices to a combined array and Normals to a combined normal arrays
-    // Also save the starting indices and the how many vertices correspond with a shape
-    GLuint prev = 0;
-    for(int i = 0;i < shapes.size();i++){
-        std::vector<glm::vec3>temp = shapes[i]->getVertices();
-        std::vector<glm::vec3>normalTemp = shapes[i]->getNormal();
-        std::vector<GLuint> pair = {prev,shapes[i]->getNumVertices()};
-        prev += shapes[i]->getNumVertices();
-        indices.push_back(pair);
-        vertices.insert(vertices.end(),temp.begin(),temp.end());
-        rot.push_back(rand()%91);
-        if(mode == Modes::SMOOTH){
-            normalV.insert(normalV.end(),temp.begin(),temp.end());
-        }
-        if(mode == Modes::FLAT){
-            normalV.insert(normalV.end(),normalTemp.begin(),normalTemp.end());
-        }
-        if(mode == Modes::WIREFRAME){
-            for(int i = 0;i < normalTemp.size();i++){
-                glm::vec3 norm(0,0,0);
-                normalV.push_back(norm);
-            }
-        }
-    }
 
+    return window;
+}
 
-    Shader shader("./src/shader/phong.vert.glsl", "./src/shader/phong.frag.glsl");
+void terminate_window(GLuint VAO, GLuint vertexVBO, Shader shader){
+    glDeleteVertexArrays(1, &VAO);
+    glDeleteBuffers(1, &vertexVBO);
+    glDeleteBuffers(1, &normalVBO);
+    glDeleteProgram(shader.getShaderProgramHandle());
+    glfwTerminate();
+}
+
+void perFrameTimeLogic()
+{
+    auto currentFrame = static_cast<float>(glfwGetTime());
+    deltaTime = currentFrame - lastFrame;
+    lastFrame = currentFrame;
+}
+
+void get_center(){
+    // Get Center of the Universe
+    float center_x= 0,center_y=0,center_z=0;
+    for(int i = 0;i< shapes.size();i++){
+        center_x += shapePos[i].x;
+        center_y += shapePos[i].y;
+        center_z += shapePos[i].z;
+    }
+    center_x = center_x/shapes.size();
+    center_y = center_y/shapes.size();
+    center_z = center_z/shapes.size();
+    center = glm::vec3(center_x,center_y,center_z);
+}
+
+std::tuple<GLuint, GLuint> bind_VAO_VBO(){
     // Bind VAO and VBOS
     GLuint VAO;
     glGenVertexArrays(1, &VAO);
@@ -173,68 +228,41 @@ int main()
 
     glEnable(GL_DEPTH_TEST);
     glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT);
-
-    while (!glfwWindowShouldClose(window))
-    {
-        //For flight simulation. Circles around the universe based on "curr" which represents the start time of the flight simulation
-        if(flight){
-            if(vertical){
-                glm::vec3 camPos(center.x,center.y+rad*sin(M_PI*(1000-curr)/1000),center.z-rad*cos(M_PI*(1000-curr)/1000));
-                camera.changePos(camPos);
-                curr+=1;
-            }else{
-                glm::vec3 camPos(center.x+rad*sin(M_PI*(1000-curr)/1000),center.y,center.z-rad*cos(M_PI*(1000-curr)/1000));
-                camera.changePos(camPos);
-                curr+=1;
-            }
-
-        }
-        perFrameTimeLogic();
-        processInputs(window);
-
-        glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-        shader.use();
-        // Pass parameters into our shaders
-        glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float) SCR_WIDTH / (float) SCR_HEIGHT, 0.1f,100.0f);
-        shader.setMat4("projection",projection);
-        glm::mat4 view = camera.getViewMatrix();
-        shader.setMat4("view", view);
-        shader.setVec3("lightPos",lightPos);
-        shader.setVec3("viewPos",camera.Position);
-        shader.setVec3("lightColor",lightColor);
-        shader.setVec3("objectColor",objColor);
-
-        // Get info associated with each shape and draw the shape
-        for(int i=0; i < shapes.size();i++){
-            glm::mat4 model = glm::mat4(1.0f); // make sure to initialize matrix to identity matrix first
-            model = glm::translate(model, shapePos[i]);
-            model = glm::rotate(model, glm::radians(rot[i]), glm::vec3(1.0f, 0.3f, 0.5f));
-            shader.setMat4("model", model);
-            glDrawArrays(GL_TRIANGLES, indices[i][0], indices[i][1]);
-        }
-
-
-        glfwSwapBuffers(window);
-        glfwPollEvents();
-    }
-
-    glDeleteVertexArrays(1, &VAO);
-    glDeleteBuffers(1, &vertexVBO);
-    glDeleteBuffers(1, &normalVBO);
-    glDeleteProgram(shader.getShaderProgramHandle());
-    glfwTerminate();
-
-    return 0;
+    return std::make_tuple(VAO, vertexVBO);
+    
 }
 
+void set_normals(){
+    // Adds Vertices to a combined array and Normals to a combined normal arrays
+    // Also save the starting indices and the how many vertices correspond with a shape
+    GLuint prev = 0;
+    for(int i = 0;i < shapes.size();i++){
+        std::vector<glm::vec3>temp = shapes[i]->getVertices();
+        std::vector<glm::vec3>normalTemp = shapes[i]->getNormal();
+        std::vector<GLuint> pair = {prev,shapes[i]->getNumVertices()};
+        prev += shapes[i]->getNumVertices();
+        indices.push_back(pair);
+        vertices.insert(vertices.end(),temp.begin(),temp.end());
+        rot.push_back(rand()%91);
+        if(mode == Modes::SMOOTH){
+            normalV.insert(normalV.end(),temp.begin(),temp.end());
+        }
+        if(mode == Modes::FLAT){
+            normalV.insert(normalV.end(),normalTemp.begin(),normalTemp.end());
+        }
+        if(mode == Modes::WIREFRAME){
+            for(int i = 0;i < normalTemp.size();i++){
+                glm::vec3 norm(0,0,0);
+                normalV.push_back(norm);
+            }
+        }
+    }
+}
 
 void framebufferSizeCallback(GLFWwindow * window, int width, int height)
 {
     glViewport(0, 0, width, height);
 }
-
 
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods){
     if (glfwGetKey(window, GLFW_KEY_F) == GLFW_PRESS)
@@ -304,6 +332,7 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
         }
     }
 }
+
 void processInputs(GLFWwindow * window){
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
     {
@@ -331,15 +360,6 @@ void processInputs(GLFWwindow * window){
     }
 }
 
-
-void perFrameTimeLogic()
-{
-    auto currentFrame = static_cast<float>(glfwGetTime());
-    deltaTime = currentFrame - lastFrame;
-    lastFrame = currentFrame;
-}
-
-
 void mouseButtonCallback(GLFWwindow * window, int button, int action, int mods)
 {
     if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
@@ -352,7 +372,6 @@ void mouseButtonCallback(GLFWwindow * window, int button, int action, int mods)
         mousePressed = false;
     }
 }
-
 
 void cursorPosCallback(GLFWwindow * window, double xpos, double ypos)
 {
@@ -375,10 +394,7 @@ void cursorPosCallback(GLFWwindow * window, double xpos, double ypos)
     }
 }
 
-
 void scrollCallback(GLFWwindow * window, double xoffset, double yoffset)
 {
     camera.processMouseScroll(yoffset);
 }
-
-
