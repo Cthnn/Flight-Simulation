@@ -6,7 +6,7 @@ Smooth Shading
 ![Smooth Shading](https://raw.githubusercontent.com/Cthnn/Flight-Simulation/main/Examples/Smooth.png)
 Flat Shading 
 ![Flat Shading](https://raw.githubusercontent.com/Cthnn/Flight-Simulation/main/Examples/Flat.png)
-Wireframe
+Wireframe\
 ![Wireframe](https://raw.githubusercontent.com/Cthnn/Flight-Simulation/main/Examples/Wireframe.png)
 
 # Instructions To Run and Build
