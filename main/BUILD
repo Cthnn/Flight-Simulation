@@ -1,0 +1,27 @@
+cc_binary(
+    name = "main",
+    srcs = ["main.cpp"],
+    data = [
+        "//shaders:phong.vert.glsl",
+        "//shaders:phong.frag.glsl",
+    ],
+    deps = [
+        "@glfw//:glfw",
+        "//third-party/glad:glad",
+        "//gpinit:camera",
+        "//gpinit:cone",
+        "//gpinit:cube",
+        "//gpinit:cylinder",
+        "//gpinit:dodecahedron",
+        "//gpinit:ellipsoid",
+        "//gpinit:flight",
+        "//gpinit:gpinit",
+        "//gpinit:icosahedron",
+        "//gpinit:oct",
+        "//gpinit:shader",
+        "//gpinit:shape",
+        "//gpinit:tetra",
+        "//gpinit:torus",
+        "//gpinit:world",
+    ],
+)

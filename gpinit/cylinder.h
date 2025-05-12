@@ -2,9 +2,9 @@
 // Created by student on 4/21/21.
 //
 
-#ifndef FLIGHT_CYLINDER_H
-#define FLIGHT_CYLINDER_H
-#include "flight/Shape.h"
+#ifndef GPINIT_CYLINDER_H
+#define GPINIT_CYLINDER_H
+#include "gpinit/shape.h"
 #include "math.h"
 
 class Cylinder : public Shape

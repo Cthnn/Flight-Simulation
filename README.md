@@ -3,27 +3,24 @@
 A flight simulator that uses OpenGL to create Smooth and Flat shaded shapes. Shapes can also be displayed as Wireframe shapes.
 
 Smooth Shading 
-![Smooth Shading](https://raw.githubusercontent.com/Cthnn/Flight-Simulation/main/Examples/Smooth.png)
+![Smooth Shading](https://raw.githubusercontent.com/Cthnn/Flight-Simulation/main/examples/Smooth.png)
 Flat Shading 
-![Flat Shading](https://raw.githubusercontent.com/Cthnn/Flight-Simulation/main/Examples/Flat.png)
+![Flat Shading](https://raw.githubusercontent.com/Cthnn/Flight-Simulation/main/examples/Flat.png)
 Wireframe\
-![Wireframe](https://raw.githubusercontent.com/Cthnn/Flight-Simulation/main/Examples/Wireframe.png)
+![Wireframe](https://raw.githubusercontent.com/Cthnn/Flight-Simulation/main/examples/Wireframe.png)
 
 # Instructions To Run and Build
 
-To run the program, there is already a compiled version in the bin. This should be named "flight".
-In order to run the program enter the first src directory and type the following command:
+To run the program, there is already a compiled version in the example directory. This should be named "app".
+In order to run the program you can run the app as an executable:
 
-			../bin/flight
+			./examples/app
 
-This will run the program. To compile this program, use the CMakeLists provided in the src directory.
-Upon entering the src directory, there is a CMakeLists.txt, an include directory, and another src directory.
-To compile the program do the following:
+This program uses Bazel to handle the dependencies for the app. If you have bazel you'll be able to run the following command to build the main app:
 
-	- First type "cmake ."
-	- This will create a make file(make sure not to type in the double quotes)
-	- Then type "make" after the files are created by cmake
-	- This will create an executable called flight which is the compiled code
+	```
+        bazel build //main:main
+    ```
 
 The following are instruction on how to use the program.
 

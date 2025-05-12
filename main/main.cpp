@@ -1,20 +1,22 @@
 #include <bits/stdc++.h>
 
-#include <glad/glad.h>
-#include <GLFW/glfw3.h>
+#include "glad/glad.h"
+#include "GLFW/glfw3.h"
 
-#include "other/camera.h"
-#include "other/shader.h"
-#include "flight/Cube.h"
-#include "flight/Tetra.h"
-#include "flight/Oct.h"
-#include "flight/Cylinder.h"
-#include "flight/Cone.h"
-#include "flight/Torus.h"
-#include "flight/Ellipsoid.h"
-#include "flight/Dodecahedron.h"
-#include "flight/Icosahedron.h"
-#include "flight/Flight.h"
+#include "gpinit/gpinit.h"
+#include "gpinit/world.h"
+#include "gpinit/camera.h"
+#include "gpinit/shader.h"
+#include "gpinit/cube.h"
+#include "gpinit/tetra.h"
+#include "gpinit/oct.h"
+#include "gpinit/cylinder.h"
+#include "gpinit/cone.h"
+#include "gpinit/torus.h"
+#include "gpinit/ellipsoid.h"
+#include "gpinit/dodecahedron.h"
+#include "gpinit/icosahedron.h"
+#include "gpinit/flight.h"
 
 
 // Set Window Height and width
@@ -45,7 +47,7 @@ const glm::vec3 objColor(0.0f, 0.0f, 1.0f);
 
 //Defining the shapes in the universe and their positions.
 std::vector<Shape*> shapes = {new Cone,new Cube(),new Cylinder(),new Ellipsoid(),new Icosahedron(0),new Icosahedron(2),new Oct(),new Tetra(),new Torus(), new Dodecahedron()};
-glm::vec3 shapePos[] = {glm::vec3(0.0f, 0.0f, 0.0f),glm::vec3(2.0f, 5.0f, -15.0f),glm::vec3(-1.5f, -5.2f, -2.5f),glm::vec3(-3.8f, -2.0f, -12.3f),glm::vec3(2.4f, -0.4f, -10.5f),glm::vec3(-0.7f, 3.0f, -7.5f),glm::vec3(1.3f, -3.0f, -9.0f),glm::vec3(2.8f, 2.0f, -2.5f),glm::vec3(1.7f, 0.3f, -20.0f),glm::vec3(4.5f, -7.0f, -12.0f)};
+std::vector<glm::vec3> shapePos = {glm::vec3(0.0f, 0.0f, 0.0f),glm::vec3(2.0f, 5.0f, -15.0f),glm::vec3(-1.5f, -5.2f, -2.5f),glm::vec3(-3.8f, -2.0f, -12.3f),glm::vec3(2.4f, -0.4f, -10.5f),glm::vec3(-0.7f, 3.0f, -7.5f),glm::vec3(1.3f, -3.0f, -9.0f),glm::vec3(2.8f, 2.0f, -2.5f),glm::vec3(1.7f, 0.3f, -20.0f),glm::vec3(4.5f, -7.0f, -12.0f)};
 
 std::vector<std::vector<GLuint>>indices;
 std::vector<glm::vec3> vertices;
@@ -62,23 +64,26 @@ GLuint normalVBO;
 
 int main()
 {
-    GLFWwindow * window = init_glfw();
+    GLFWwindow * window = init_glfw(
+        SCR_WIDTH, SCR_HEIGHT, cursorPosCallback, 
+        key_callback, framebufferSizeCallback, mouseButtonCallback, 
+        scrollCallback
+    );
     // For Random Rotations, Initialize random seed
-    unsigned seed = time(0);
-    srand(seed);
+    srand(time(0));
 
     // Get Center of the world for camera
-    get_center();
+    center = get_center(shapePos);
 
     // Set normals of shapes for light
     set_normals();
 
     //Define shaders
-    Shader shader("./src/shader/phong.vert.glsl", "./src/shader/phong.frag.glsl");
+    Shader shader("./shaders/phong.vert.glsl", "./shaders/phong.frag.glsl");
     GLuint VAO, vertexVBO;
 
     // Bind our VAO and VBOs
-    std::tie(VAO,vertexVBO) = bind_VAO_VBO();
+    std::tie(VAO,vertexVBO,normalVBO) = bind_VAO_VBO(SCR_WIDTH, SCR_HEIGHT, vertices, normalV);
 
     //Render Loop
     while (!glfwWindowShouldClose(window))
@@ -97,139 +102,26 @@ int main()
 
         }
 
-        perFrameTimeLogic();
+        std::tie(deltaTime,lastFrame) = perFrameTimeLogic(lastFrame);
         processInputs(window);
 
-        glClearColor(52.0f/255.0f, 1.0f, 1.0f, 1.0f);
+        glClearColor(0.65f, 0.1f, 0.1f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         shader.use();
 
         // Pass parameters into our shaders
-        pass_params_to_shader(shader, camera);
-
+        pass_params_to_shader(shader, camera,
+            SCR_WIDTH, SCR_HEIGHT, lightPos, 
+            lightColor, objColor, shapes, shapePos, 
+            indices, rot
+        );
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
+    terminate_window(VAO, vertexVBO, normalVBO, shader);
 
     return 0;
-}
-
-void pass_params_to_shader(Shader shader, Camera camera){
-    glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float) SCR_WIDTH / (float) SCR_HEIGHT, 0.1f,100.0f);
-    shader.setMat4("projection",projection);
-    glm::mat4 view = camera.getViewMatrix();
-    shader.setMat4("view", view);
-    shader.setVec3("lightPos",lightPos);
-    shader.setVec3("viewPos",camera.Position);
-    shader.setVec3("lightColor",lightColor);
-    shader.setVec3("objectColor",objColor);
-
-    // Get info associated with each shape and draw the shape
-    for(int i=0; i < shapes.size();i++){
-        glm::mat4 model = glm::mat4(1.0f); // make sure to initialize matrix to identity matrix first
-        model = glm::translate(model, shapePos[i]);
-        model = glm::rotate(model, glm::radians(rot[i]), glm::vec3(1.0f, 0.3f, 0.5f));
-        shader.setMat4("model", model);
-        glDrawArrays(GL_TRIANGLES, indices[i][0], indices[i][1]);
-    }
-}
-
-GLFWwindow * init_glfw(){
-    //Initialize Window
-    //Shape Display Modes
-    glfwInit();
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-    glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
-    GLFWwindow * window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "OpenGLDemo", nullptr, nullptr);
-    if (!window)
-    {
-        std::cout << std::unitbuf
-                  << "[ERROR] " << __FILE__ << ':' << __LINE__ << ' ' << __PRETTY_FUNCTION__
-                  << "\n[ERROR] " << "Failed to create GLFW window!"
-                  << std::nounitbuf << std::endl;
-        glfwTerminate();
-        std::abort();
-    }
-
-    glfwMakeContextCurrent(window);
-    glfwSetCursorPosCallback(window, cursorPosCallback);
-    glfwSetKeyCallback(window, key_callback);
-    glfwSetFramebufferSizeCallback(window, framebufferSizeCallback);
-    glfwSetMouseButtonCallback(window, mouseButtonCallback);
-    glfwSetScrollCallback(window, scrollCallback);
-
-
-    if (!gladLoadGLLoader(reinterpret_cast<GLADloadproc>(glfwGetProcAddress)))
-    {
-        std::cout << std::unitbuf
-                  << "[ERROR] " << __FILE__ << ':' << __LINE__ << ' ' << __PRETTY_FUNCTION__
-                  << "\n[ERROR] " << "Failed to initialize GLAD!"
-                  << std::nounitbuf << std::endl;
-
-        std::abort();
-    }
-
-    return window;
-}
-
-void terminate_window(GLuint VAO, GLuint vertexVBO, Shader shader){
-    glDeleteVertexArrays(1, &VAO);
-    glDeleteBuffers(1, &vertexVBO);
-    glDeleteBuffers(1, &normalVBO);
-    glDeleteProgram(shader.getShaderProgramHandle());
-    glfwTerminate();
-}
-
-void perFrameTimeLogic()
-{
-    auto currentFrame = static_cast<float>(glfwGetTime());
-    deltaTime = currentFrame - lastFrame;
-    lastFrame = currentFrame;
-}
-
-void get_center(){
-    // Get Center of the Universe
-    float center_x= 0,center_y=0,center_z=0;
-    for(int i = 0;i< shapes.size();i++){
-        center_x += shapePos[i].x;
-        center_y += shapePos[i].y;
-        center_z += shapePos[i].z;
-    }
-    center_x = center_x/shapes.size();
-    center_y = center_y/shapes.size();
-    center_z = center_z/shapes.size();
-    center = glm::vec3(center_x,center_y,center_z);
-}
-
-std::tuple<GLuint, GLuint> bind_VAO_VBO(){
-    // Bind VAO and VBOS
-    GLuint VAO;
-    glGenVertexArrays(1, &VAO);
-    glBindVertexArray(VAO);
-
-    GLuint vertexVBO;
-    glGenBuffers(1, &vertexVBO);
-    glBindBuffer(GL_ARRAY_BUFFER, vertexVBO);
-    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(glm::vec3), vertices.data(), GL_STATIC_DRAW);
-
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), reinterpret_cast<void *>(0));
-
-
-    glGenBuffers(1, &normalVBO);
-    glBindBuffer(GL_ARRAY_BUFFER, normalVBO);
-    glBufferData(GL_ARRAY_BUFFER, normalV.size() * sizeof(glm::vec3), normalV.data(), GL_STATIC_DRAW);
-
-    glEnableVertexAttribArray(1);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), reinterpret_cast<void *>(0));
-
-    glEnable(GL_DEPTH_TEST);
-    glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT);
-    return std::make_tuple(VAO, vertexVBO);
-    
 }
 
 void set_normals(){

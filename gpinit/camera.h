@@ -1,5 +1,5 @@
-#ifndef OTHER_CAMERA_H
-#define OTHER_CAMERA_H
+#ifndef GPINIT_CAMERA_H
+#define GPINIT_CAMERA_H
 
 #include <glad/glad.h>
 #include <glm/glm.hpp>

@@ -2,9 +2,9 @@
 // Created by student on 4/24/21.
 //
 
-#ifndef FLIGHT_DODECAHEDRON_H
-#define FLIGHT_DODECAHEDRON_H
-#include "flight/Shape.h"
+#ifndef GPINIT_DODECAHEDRON_H
+#define GPINIT_DODECAHEDRON_H
+#include "gpinit/shape.h"
 #include "math.h"
 
 

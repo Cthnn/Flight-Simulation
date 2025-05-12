@@ -1,5 +1,5 @@
-#ifndef FLIGHT_SHAPE_H
-#define FLIGHT_SHAPE_H
+#ifndef GPINIT_SHAPE_H
+#define GPINIT_SHAPE_H
 
 #include <glad/glad.h>
 #include <glm/glm.hpp>

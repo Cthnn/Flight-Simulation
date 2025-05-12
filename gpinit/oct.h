@@ -1,14 +1,15 @@
 //
-// Created by student on 4/19/21.
+// Created by student on 4/20/21.
 //
 
-#ifndef FLIGHT_TETRA_H
-#define FLIGHT_TETRA_H
-#include "flight/Shape.h"
-class Tetra : public Shape
+#ifndef GPINIT_OCT_H
+#define GPINIT_OCT_H
+#include "gpinit/shape.h"
+#include "math.h"
+class Oct : public Shape
 {
 public:
-    Tetra()
+    Oct()
     {
         // TODO: set vertex and normal
         // The normal is associated with vertices, but it is facet normal, NOT vertex normal.
@@ -33,7 +34,7 @@ public:
 
     GLuint getNumVertices() const override
     {
-        return vertex.size();
+        return NUM_VERTICES;
     }
 
     const glm::vec3 * getVertexData() const override
@@ -60,30 +61,46 @@ private:
     // which is more favored than static constant members
     enum : GLuint
     {
-        NUM_FACETS = 4,
+        NUM_FACETS = 8 ,
         NUM_VERTICES = NUM_FACETS * 3
     };
 
     const GLfloat vertexData[NUM_VERTICES][3] =
             {
-                    0.5f, 0.5f, 0.5f,
-                    -0.5f, -0.5f, 0.5f,
-                    -0.5f, 0.5f, -0.5f,
+                    0.5f, 0.0f, 0.5f,
+                    0.5f, 0.0f,-0.5f,
+                    0.0f, float(sqrt(0.5f)), 0.0f,
 
-                    0.5f, 0.5f, 0.5f,
-                    -0.5f, 0.5f, -0.5f,
-                    0.5f, -0.5f, -0.5f,
+                    0.5f, 0.0f, 0.5f,
+                    0.5f, 0.0f,-0.5f,
+                    0.0f,float(-sqrt(0.5f)), 0.0f,
 
-                    0.5f, 0.5f, 0.5f,
-                    -0.5f, -0.5f, 0.5f,
-                    0.5f, -0.5f, -0.5f,
+                    0.5f, 0.0f,-0.5f,
+                    -0.5f, 0.0f,-0.5f,
+                    0.0f, float(sqrt(0.5f)), 0.0f,
 
-                    -0.5f, -0.5f, 0.5f,
-                    -0.5f, 0.5f, -0.5f,
-                    0.5f, -0.5f, -0.5f
+                    0.5f, 0.0f,-0.5f,
+                    -0.5f, 0.0f,-0.5f,
+                    0.0f, float(-sqrt(0.5f)), 0.0f,
+
+                    -0.5f, 0.0f,-0.5f,
+                    -0.5f, 0.0f,0.5f,
+                    0.0f, float(sqrt(0.5f)),0.0f,
+
+                    -0.5f, 0.0f,-0.5f,
+                    -0.5f, 0.0f,0.5f,
+                    0.0f, float(-sqrt(0.5f)),0.0f,
+
+                    -0.5f, 0.0f, 0.5f,
+                    0.5f,  0.0f, 0.5f,
+                    0.0f,float(sqrt(0.5f)), 0.0f,
+
+                    -0.5f, 0.0f, 0.5f,
+                    0.5f,  0.0f, 0.5f,
+                    0.0f,float(-sqrt(0.5f)), 0.0f,
             };
 
     std::vector<glm::vec3> vertex;
     std::vector<glm::vec3> normal;
 };
-#endif //FLIGHT_TETRA_H
+#endif //FLIGHT_OCT_H

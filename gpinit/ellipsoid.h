@@ -1,19 +1,22 @@
-#ifndef FLIGHT_ICOSAHEDRON_H
-#define FLIGHT_ICOSAHEDRON_H
+//
+// Created by student on 4/22/21.
+//
 
-#include "flight/Shape.h"
+#ifndef GPINIT_ELLIPSOID_H
+#define GPINIT_ELLIPSOID_H
+#include "gpinit/shape.h"
 
 
-class Icosahedron : public Shape
+class Ellipsoid : public Shape
 {
 public:
-    Icosahedron(int depth)
+    Ellipsoid()
     {
         for(int i = 0; i < NUM_FACETS;i++){
             glm::vec3 a(vertexData[3*i][0],vertexData[3*i][1],vertexData[3*i][2]);
             glm::vec3 b(vertexData[(3*i)+1][0],vertexData[(3*i)+1][1],vertexData[(3*i)+1][2]);
             glm::vec3 c(vertexData[(3*i)+2][0],vertexData[(3*i)+2][1],vertexData[(3*i)+2][2]);
-            subdivide(a,b,c,depth);
+            subdivide(a,b,c,2);
         }
     }
 
@@ -83,12 +86,15 @@ private:
     {
         if (depth == 0)
         {
-            vertex.push_back(v1);
-            vertex.push_back(v2);
-            vertex.push_back(v3);
-            float x = ((v1.x+v2.x+v3.x)/3);
-            float y = ((v1.y+v2.y+v3.y)/3);
-            float z = ((v1.z+v2.z+v3.z)/3);
+            glm::vec3 a(v1.x*3,v1.y,v1.z);
+            glm::vec3 b(v2.x*3,v2.y,v2.z);
+            glm::vec3 c(v3.x*3,v3.y,v3.z);
+            vertex.push_back(a);
+            vertex.push_back(b);
+            vertex.push_back(c);
+            float x = ((a.x+b.x+c.x)/3);
+            float y = ((a.y+b.y+c.y)/3);
+            float z = ((a.z+b.z+c.z)/3);
             glm::vec3 norm(x,y,z);
             normal.push_back(norm);
             normal.push_back(norm);
@@ -99,13 +105,10 @@ private:
         glm::vec3 v12 = glm::normalize((v1 + v2) / 2.0f);
         glm::vec3 v23 = glm::normalize((v2 + v3) / 2.0f);
         glm::vec3 v31 = glm::normalize((v3 + v1) / 2.0f);
-
         subdivide(v1, v12, v31, depth - 1);
         subdivide(v2, v23, v12, depth - 1);
         subdivide(v3, v31, v23, depth - 1);
         subdivide(v12, v23, v31, depth - 1);
     }
 };
-
-
-#endif  // FLIGHT_ICOSAHEDRON_H
+#endif //FLIGHT_ELLIPSOID_H

@@ -1,7 +1,7 @@
-#ifndef FLIGHT_CUBE_H
-#define FLIGHT_CUBE_H
+#ifndef GPINIT_CUBE_H
+#define GPINIT_CUBE_H
 
-#include "flight/Shape.h"
+#include "gpinit/shape.h"
 
 
 class Cube : public Shape

@@ -2,9 +2,9 @@
 // Created by student on 4/22/21.
 //
 
-#ifndef FLIGHT_TORUS_H
-#define FLIGHT_TORUS_H
-#include "flight/Shape.h"
+#ifndef GPINIT_TORUS_H
+#define GPINIT_TORUS_H
+#include "gpinit/shape.h"
 #include "math.h"
 class Torus : public Shape
 {

@@ -1,5 +1,5 @@
-#ifndef OTHER_SHADER_H
-#define OTHER_SHADER_H
+#ifndef GPINIT_SHADER_H
+#define GPINIT_SHADER_H
 
 #include <glad/glad.h>
 #include <glm/glm.hpp>
