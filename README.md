@@ -14,10 +14,10 @@ Wireframe\
 To run the program, there is already a compiled version in the example directory. This should be named "app". In order to run the program you can run the app as an executable:
 
 ```
-./examples/app
+    ./examples/app
 ```
 
-This program uses Bazel to handle the dependencies for the app. If you have bazel you'll be able to run the following command to build the main app:
+This program uses Bazel to handle the dependencies for the app. Assuming you have connection to the BCR or a private proxy of BCR you can build the app by building the `//main:main` target:
 ```
     bazel build //main:main
 ```
